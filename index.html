@@ -150,14 +150,17 @@
             new_purchase: renderPurchaseForm,
             payments: renderPayments,
             reports: renderReports,
-            ledger: renderLedger, // New tab for ledger search
+            ledger: renderLedgerSelection, // New function for ledger selection
+            contact_ledger: renderContactLedger, // New function for specific contact ledger
+            receivables: renderReceivables,
+            payables: renderPayables,
         }[tab];
         if (renderer) renderer(data, id);
     }
     window.redirect = render; // Expose render function for dashboard links
 
     // ========== RENDER: DASHBOARD ==========
-    function renderDashboard({ products, sales, purchases }) {
+    function renderDashboard({ products, sales, purchases, customers, suppliers }) {
       // Get the date filters or use today's date as a default
       const fromDate = document.getElementById('from-date')?.value || today();
       const toDate = document.getElementById('to-date')?.value || today();
@@ -188,8 +191,8 @@
           <div class="clickable" onclick="redirect('sales')" style="flex:1;min-width:200px;padding:16px;border-radius:10px;background:#eef8f7"><div class="small">Total Sales</div><div class="bold" style="font-size:24px;">₹ ${fmt(totalSales)}</div></div>
           <div class="clickable" onclick="redirect('purchases')" style="flex:1;min-width:200px;padding:16px;border-radius:10px;background:#f0fdf4"><div class="small">Total Purchases</div><div class="bold" style="font-size:24px;">₹ ${fmt(totalPurchases)}</div></div>
           <div style="flex:1;min-width:200px;padding:16px;border-radius:10px;background:#e7f0ff"><div class="small">Profit</div><div class="bold" style="font-size:24px;">₹ ${fmt(profit)}</div></div>
-          <div style="flex:1;min-width:200px;padding:16px;border-radius:10px;background:#fff7ed"><div class="small">Receivables</div><div class="bold" style="font-size:24px;">₹ ${fmt(receivables)}</div></div>
-          <div style="flex:1;min-width:200px;padding:16px;border-radius:10px;background:#fff1f2"><div class="small">Payables</div><div class="bold" style="font-size:24px;">₹ ${fmt(payables)}</div></div>
+          <div class="clickable" onclick="redirect('receivables')" style="flex:1;min-width:200px;padding:16px;border-radius:10px;background:#fff7ed"><div class="small">Receivables</div><div class="bold" style="font-size:24px;">₹ ${fmt(receivables)}</div></div>
+          <div class="clickable" onclick="redirect('payables')" style="flex:1;min-width:200px;padding:16px;border-radius:10px;background:#fff1f2"><div class="small">Payables</div><div class="bold" style="font-size:24px;">₹ ${fmt(payables)}</div></div>
         </div>
         <div class="card">
           <h3 style="margin-top:0">Low Stock Alerts</h3>
@@ -669,8 +672,8 @@
                 <button class="btn danger" id="import-btn" style="margin-top:8px;">Import and Overwrite</button>
             </div>
             <div class="card">
-                <h3>Ledger Search</h3>
-                <p class="small">View all transactions (sales, purchases, payments) in a single list.</p>
+                <h3>View Ledger</h3>
+                <p class="small">View detailed ledger accounts for customers and suppliers.</p>
                 <button class="btn primary" onclick="render('ledger')">Go to Ledger</button>
             </div>
             `;
@@ -718,48 +721,195 @@
         };
     }
     
-    // ========== RENDER: LEDGER SEARCH ==========
-    function renderLedger({ sales, purchases, payments, customers, suppliers }) {
-        // Combine all transactions into a single ledger list
-        const ledger = [
-            ...sales.map(s => ({ ...s, type: 'Sale', date: s.date, total: s.total, contactId: s.customerId })),
-            ...purchases.map(p => ({ ...p, type: 'Purchase', date: p.date, total: p.total, contactId: p.supplierId })),
-            ...payments.map(pm => ({ ...pm, type: pm.type, total: pm.amount, contactId: pm.refType === 'sale' ? sales.find(s => s.id === pm.refId)?.customerId : purchases.find(p => p.id === pm.refId)?.supplierId }))
-        ];
-        
-        // Sort ledger by date in descending order
-        ledger.sort((a, b) => new Date(b.date) - new Date(a.date));
-
-        const getContactName = (id) => {
-            const customer = customers.find(c => c.id === id);
-            if (customer) return customer.name;
-            const supplier = suppliers.find(s => s.id === id);
-            if (supplier) return supplier.name;
-            return 'N/A';
+    // ========== RENDER: LEDGER SELECTION PAGE ==========
+    function renderLedgerSelection({ customers, suppliers }) {
+        main.innerHTML = `
+            <h2>Select Ledger Account</h2>
+            <div class="card">
+                <div class="row">
+                    <div style="flex:1">
+                        <label>Account Type</label>
+                        <select id="ledger-type-select">
+                            <option value="customer">Customers</option>
+                            <option value="supplier">Suppliers</option>
+                        </select>
+                    </div>
+                    <div style="flex:2">
+                        <label>Select Account</label>
+                        <select id="ledger-contact-select"></select>
+                    </div>
+                    <div style="margin-top:21px;">
+                        <button class="btn primary" id="view-ledger-btn">View Ledger</button>
+                    </div>
+                </div>
+            </div>`;
+    
+        const typeSelect = document.getElementById('ledger-type-select');
+        const contactSelect = document.getElementById('ledger-contact-select');
+    
+        const populateContacts = () => {
+            const type = typeSelect.value;
+            const contacts = type === 'customer' ? customers : suppliers;
+            contactSelect.innerHTML = contacts.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
         };
+    
+        populateContacts();
+        typeSelect.onchange = populateContacts;
+        
+        document.getElementById('view-ledger-btn').onclick = () => {
+            const contactId = contactSelect.value;
+            if (contactId) {
+                render('contact_ledger', contactId);
+            } else {
+                showToast('Please select an account.');
+            }
+        };
+    }
+
+    // ========== RENDER: SPECIFIC CONTACT LEDGER ==========
+    function renderContactLedger({ sales, purchases, payments, customers, suppliers }, contactId) {
+        const isCustomer = customers.some(c => c.id === contactId);
+        const contact = (isCustomer ? customers : suppliers).find(c => c.id === contactId);
+        if (!contact) {
+            main.innerHTML = '<h2>Account not found</h2><p>Please go back and select a valid account.</p>';
+            return;
+        }
+
+        const ledgerEntries = [];
+        
+        // Populate ledger with sales/purchases and related payments
+        if (isCustomer) {
+            sales.filter(s => s.customerId === contactId).forEach(s => {
+                ledgerEntries.push({ date: s.date, type: 'Sale', note: `Invoice #${s.invoice}`, debit: s.total, credit: 0, sortDate: s.date });
+            });
+            payments.filter(p => p.refType === 'sale' && sales.find(s => s.id === p.refId)?.customerId === contactId).forEach(p => {
+                ledgerEntries.push({ date: p.date, type: 'Receipt', note: `Payment received (Ref: Invoice #${sales.find(s => s.id === p.refId)?.invoice})`, debit: 0, credit: p.amount, sortDate: p.date });
+            });
+        } else { // Supplier
+            purchases.filter(p => p.supplierId === contactId).forEach(p => {
+                ledgerEntries.push({ date: p.date, type: 'Purchase', note: `Bill #${p.bill}`, debit: 0, credit: p.total, sortDate: p.date });
+            });
+            payments.filter(p => p.refType === 'purchase' && purchases.find(pu => pu.id === p.refId)?.supplierId === contactId).forEach(p => {
+                ledgerEntries.push({ date: p.date, type: 'Payment', note: `Payment made (Ref: Bill #${purchases.find(pu => pu.id === p.refId)?.bill})`, debit: p.amount, credit: 0, sortDate: p.date });
+            });
+        }
+        
+        // Sort entries by date
+        ledgerEntries.sort((a, b) => a.date.localeCompare(b.date));
+
+        let balance = 0;
+        let runningLedger = [];
+        ledgerEntries.forEach(entry => {
+            balance += entry.debit - entry.credit;
+            runningLedger.push({...entry, balance});
+        });
 
         main.innerHTML = `
-            <h2>Ledger Search</h2>
-            <div class="card">
-                <h3>Transaction History</h3>
+            <h2>Ledger Account: ${contact.name}</h2>
+            <div class="card row" style="justify-content:space-between;">
+              <span class="small">Opening Balance: <b id="opening-balance">₹ 0.00</b></span>
+              <span class="small">Current Balance: <b id="closing-balance">₹ ${fmt(balance)}</b></span>
+            </div>
+            <div class="card" id="printable-area">
                 <table>
                     <thead>
                         <tr>
                             <th>Date</th>
-                            <th>Type</th>
-                            <th>Contact</th>
-                            <th class="right">Amount</th>
+                            <th>Particulars</th>
+                            <th class="right">Debit (₹)</th>
+                            <th class="right">Credit (₹)</th>
+                            <th class="right">Balance (₹)</th>
+                        </tr>
+                    </thead>
+                    <tbody id="ledger-table-body">
+                        ${runningLedger.map(entry => `
+                            <tr>
+                                <td>${entry.date}</td>
+                                <td>${entry.note}</td>
+                                <td class="right">${fmt(entry.debit)}</td>
+                                <td class="right">${fmt(entry.credit)}</td>
+                                <td class="right">${fmt(entry.balance)}</td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            </div>
+            <div class="row no-print" style="justify-content:flex-end; gap:8px;">
+                <button class="btn ghost" onclick="render('ledger')">Back to Selection</button>
+                <button class="btn primary" onclick="window.print()">Print Ledger</button>
+            </div>
+        `;
+
+        document.getElementById('opening-balance').textContent = `₹ ${fmt(runningLedger[0]?.debit - runningLedger[0]?.credit || 0)}`;
+    }
+
+
+    function renderReceivables({ sales, customers }) {
+        const receivables = sales.filter(s => (s.total || 0) > (s.paid || 0));
+        main.innerHTML = `
+            <h2>Receivables</h2>
+            <div class="card">
+                <h3>Outstanding Invoices</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Invoice #</th>
+                            <th>Customer</th>
+                            <th class="right">Total</th>
+                            <th class="right">Paid</th>
+                            <th class="right">Due</th>
                         </tr>
                     </thead>
                     <tbody>
-                        ${ledger.map(item => `
-                            <tr>
-                                <td>${item.date}</td>
-                                <td>${item.type}</td>
-                                <td>${getContactName(item.contactId)}</td>
-                                <td class="right">₹ ${fmt(item.total)}</td>
-                            </tr>
-                        `).join('')}
+                        ${receivables.map(s => {
+                            const cust = customers.find(c => c.id === s.customerId)?.name || 'N/A';
+                            const due = (s.total || 0) - (s.paid || 0);
+                            return `<tr>
+                                <td>${s.date}</td>
+                                <td>${s.invoice}</td>
+                                <td>${cust}</td>
+                                <td class="right">₹ ${fmt(s.total)}</td>
+                                <td class="right">₹ ${fmt(s.paid)}</td>
+                                <td class="right" style="color:#ef4444">₹ ${fmt(due)}</td>
+                            </tr>`;
+                        }).join('')}
+                    </tbody>
+                </table>
+            </div>
+        `;
+    }
+
+    function renderPayables({ purchases, suppliers }) {
+        const payables = purchases.filter(p => (p.total || 0) > (p.paid || 0));
+        main.innerHTML = `
+            <h2>Payables</h2>
+            <div class="card">
+                <h3>Outstanding Bills</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Bill #</th>
+                            <th>Supplier</th>
+                            <th class="right">Total</th>
+                            <th class="right">Paid</th>
+                            <th class="right">Due</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${payables.map(p => {
+                            const sup = suppliers.find(s => s.id === p.supplierId)?.name || 'N/A';
+                            const due = (p.total || 0) - (p.paid || 0);
+                            return `<tr>
+                                <td>${p.date}</td>
+                                <td>${p.bill}</td>
+                                <td>${sup}</td>
+                                <td class="right">₹ ${fmt(p.total)}</td>
+                                <td class="right">₹ ${fmt(p.paid)}</td>
+                                <td class="right" style="color:#ef4444">₹ ${fmt(due)}</td>
+                            </tr>`;
+                        }).join('')}
                     </tbody>
                 </table>
             </div>
