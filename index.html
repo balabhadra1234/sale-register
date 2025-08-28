@@ -481,6 +481,8 @@
             reports: renderReports,
             receivables: renderReceivables,
             payables: renderPayables,
+            ledger_select: renderLedgerSelection,
+            ledger: renderLedger
         }[tab];
         if (renderer) renderer(data, id);
     }
@@ -1324,14 +1326,6 @@
                 </div>
             </div>
             <div class="card">
-                <h3>Export/Import Data</h3>
-                <div class="row">
-                    <button class="btn ghost" onclick="exportData()">Export Data</button>
-                    <input type="file" id="import-file" style="display:none;" accept=".json">
-                    <button class="btn ghost" onclick="document.getElementById('import-file').click()">Import Data</button>
-                </div>
-            </div>
-            <div class="card">
                 <h3>Search Bills & Invoices</h3>
                 <div class="row">
                     <div style="flex:1">
@@ -1342,12 +1336,27 @@
                 <div id="search-results-table"></div>
             </div>
             <div class="card">
+                <h3>Account Ledgers</h3>
+                <div class="row">
+                    <button class="btn ghost" onclick="redirect('ledger_select')">View Customer/Supplier Ledger</button>
+                </div>
+            </div>
+            <div class="card">
                 <h3>Other Reports</h3>
                 <div class="row">
                     <button class="btn ghost" onclick="redirect('receivables')">View Receivables</button>
                     <button class="btn ghost" onclick="redirect('payables')">View Payables</button>
                 </div>
-            </div>`;
+            </div>
+            <div class="card">
+                <h3>Export/Import Data</h3>
+                <div class="row">
+                    <button class="btn ghost" onclick="exportData()">Export Data</button>
+                    <input type="file" id="import-file" style="display:none;" accept=".json">
+                    <button class="btn ghost" onclick="document.getElementById('import-file').click()">Import Data</button>
+                </div>
+            </div>
+            `;
 
         document.getElementById('report-filter-btn').onclick = () => render('reports');
 
@@ -1531,6 +1540,205 @@
             </div>`;
     }
 
+    // ========== RENDER: LEDGER SELECTION ==========
+    function renderLedgerSelection({ customers, suppliers }) {
+        main.innerHTML = `
+            <h2>View Account Ledger</h2>
+            <div class="card">
+                <h3>Select a Customer or Supplier</h3>
+                <form id="ledger-select-form">
+                    <div class="row">
+                        <div style="flex:1">
+                            <label>Account Type</label>
+                            <select id="account-type-select">
+                                <option value="customer">Customer</option>
+                                <option value="supplier">Supplier</option>
+                            </select>
+                        </div>
+                        <div style="flex:2">
+                            <label>Select Account</label>
+                            <select id="account-select"></select>
+                        </div>
+                    </div>
+                    <div class="row" style="margin-top:16px;">
+                        <div style="flex:1">
+                            <label>From Date</label>
+                            <input type="date" id="ledger-from-date" value="${today()}">
+                        </div>
+                        <div style="flex:1">
+                            <label>To Date</label>
+                            <input type="date" id="ledger-to-date" value="${today()}">
+                        </div>
+                    </div>
+                    <div class="row" style="justify-content:flex-end; margin-top:16px;">
+                        <button type="submit" class="btn primary">View Ledger</button>
+                    </div>
+                </form>
+            </div>`;
+
+        const typeSelect = document.getElementById('account-type-select');
+        const accountSelect = document.getElementById('account-select');
+
+        const updateAccountOptions = () => {
+            const isCustomer = typeSelect.value === 'customer';
+            const data = isCustomer ? customers : suppliers;
+            accountSelect.innerHTML = data.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
+        };
+
+        typeSelect.onchange = updateAccountOptions;
+        updateAccountOptions();
+
+        document.getElementById('ledger-select-form').onsubmit = e => {
+            e.preventDefault();
+            const accountType = typeSelect.value;
+            const accountId = accountSelect.value;
+            const fromDate = document.getElementById('ledger-from-date').value;
+            const toDate = document.getElementById('ledger-to-date').value;
+            if (accountId) {
+                render('ledger', { id: accountId, type: accountType, fromDate, toDate });
+            } else {
+                showToast("Please select an account.");
+            }
+        };
+    }
+
+    // ========== RENDER: LEDGER VIEW ==========
+    function renderLedger(data, { id, type, fromDate, toDate }) {
+        const { sales, purchases, payments, customers, suppliers } = data;
+        const isCustomer = type === 'customer';
+        const contact = (isCustomer ? customers : suppliers).find(c => c.id === id);
+        if (!contact) {
+            main.innerHTML = `<div class="card">Account not found.</div>`;
+            return;
+        }
+
+        const allSales = load('sales');
+        const allPurchases = load('purchases');
+        const allPayments = load('payments');
+
+        // Calculate Opening Balance
+        let openingBalance = 0;
+        let ledgerEntries = [];
+
+        if (isCustomer) {
+            openingBalance = allSales.filter(s => s.customerId === id && s.date < fromDate).reduce((sum, s) => sum + ((s.total || 0) - (s.paid || 0)), 0);
+            openingBalance -= allPayments.filter(p => p.type === 'receipt' && p.date < fromDate && allSales.find(s => s.id === p.refId)?.customerId === id).reduce((sum, p) => sum + (p.amount || 0), 0);
+
+            // Populate ledger entries for the date range
+            allSales.filter(s => s.customerId === id && s.date >= fromDate && s.date <= toDate).forEach(s => {
+                ledgerEntries.push({
+                    date: s.date,
+                    type: 'Invoice',
+                    ref: s.invoice,
+                    debit: s.total,
+                    credit: s.paid
+                });
+            });
+            allPayments.filter(p => p.type === 'receipt' && p.date >= fromDate && p.date <= toDate && allSales.find(s => s.id === p.refId)?.customerId === id).forEach(p => {
+                ledgerEntries.push({
+                    date: p.date,
+                    type: 'Receipt',
+                    ref: allSales.find(s => s.id === p.refId)?.invoice,
+                    debit: 0,
+                    credit: p.amount
+                });
+            });
+        } else { // isSupplier
+            openingBalance = allPurchases.filter(p => p.supplierId === id && p.date < fromDate).reduce((sum, p) => sum + ((p.total || 0) - (p.paid || 0)), 0);
+            openingBalance -= allPayments.filter(p => p.type === 'payment' && p.date < fromDate && allPurchases.find(b => b.id === p.refId)?.supplierId === id).reduce((sum, p) => sum + (p.amount || 0), 0);
+
+            // Populate ledger entries for the date range
+            allPurchases.filter(p => p.supplierId === id && p.date >= fromDate && p.date <= toDate).forEach(p => {
+                ledgerEntries.push({
+                    date: p.date,
+                    type: 'Bill',
+                    ref: p.bill,
+                    debit: 0,
+                    credit: p.total
+                });
+            });
+            allPayments.filter(p => p.type === 'payment' && p.date >= fromDate && p.date <= toDate && allPurchases.find(b => b.id === p.refId)?.supplierId === id).forEach(p => {
+                ledgerEntries.push({
+                    date: p.date,
+                    type: 'Payment',
+                    ref: allPurchases.find(b => b.id === p.refId)?.bill,
+                    debit: p.amount,
+                    credit: 0
+                });
+            });
+        }
+
+        // Sort entries by date
+        ledgerEntries.sort((a, b) => new Date(a.date) - new Date(b.date));
+
+        // Calculate running balance
+        let runningBalance = openingBalance;
+        const ledgerRows = ledgerEntries.map(entry => {
+            const prevBalance = runningBalance;
+            runningBalance += entry.debit;
+            runningBalance -= entry.credit;
+            const balanceText = runningBalance >= 0 ? `₹ ${fmt(Math.abs(runningBalance))} Dr` : `₹ ${fmt(Math.abs(runningBalance))} Cr`;
+            return `
+                <tr>
+                    <td>${entry.date}</td>
+                    <td>${entry.type}</td>
+                    <td>${entry.ref}</td>
+                    <td class="right">₹ ${fmt(entry.debit)}</td>
+                    <td class="right">₹ ${fmt(entry.credit)}</td>
+                    <td class="right ${runningBalance < 0 ? 'text-red-500' : ''}">${balanceText}</td>
+                </tr>`;
+        }).join('');
+
+        const openingBalanceText = openingBalance >= 0 ? `₹ ${fmt(Math.abs(openingBalance))} Dr` : `₹ ${fmt(Math.abs(openingBalance))} Cr`;
+        const closingBalanceText = runningBalance >= 0 ? `₹ ${fmt(Math.abs(runningBalance))} Dr` : `₹ ${fmt(Math.abs(runningBalance))} Cr`;
+        
+        main.innerHTML = `
+            <h2>Ledger for ${contact.name}</h2>
+            <div class="card">
+                <div class="row">
+                    <div style="flex:1">
+                        <label>From Date</label>
+                        <input type="date" id="ledger-from-date-edit" value="${fromDate}">
+                    </div>
+                    <div style="flex:1">
+                        <label>To Date</label>
+                        <input type="date" id="ledger-to-date-edit" value="${toDate}">
+                    </div>
+                    <div style="margin-top:21px;">
+                        <button class="btn primary" id="update-ledger-btn">Update</button>
+                    </div>
+                </div>
+            </div>
+            <div class="card">
+                <p>Opening Balance as of ${fromDate}: <span class="bold">${openingBalanceText}</span></p>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Particulars</th>
+                            <th>Ref #</th>
+                            <th class="right">Debit (₹)</th>
+                            <th class="right">Credit (₹)</th>
+                            <th class="right">Running Balance</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${ledgerRows}
+                    </tbody>
+                </table>
+                <p style="text-align:right; margin-top:16px;">
+                    Closing Balance as of ${toDate}: <span class="bold">${closingBalanceText}</span>
+                </p>
+            </div>
+        `;
+        
+        document.getElementById('update-ledger-btn').onclick = () => {
+            const newFromDate = document.getElementById('ledger-from-date-edit').value;
+            const newToDate = document.getElementById('ledger-to-date-edit').value;
+            render('ledger', { id, type, fromDate: newFromDate, toDate: newToDate });
+        };
+    }
+    
     // ========== APP INITIALIZATION =========
     (function init() {
         if (localStorage.getItem('theme') === 'dark') {
