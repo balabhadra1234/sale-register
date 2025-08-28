@@ -3,26 +3,36 @@
 <head>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
-  <title>Sales & Purchase — Fixed</title>
+  <title>Sales & Purchase — Updated</title>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
     :root {
-      --accent: #2b7a78; --muted: #6b7280; --border: #e5e7eb; --bg: #f9fafb;
-      --card-bg: #ffffff; --text: #111827; --shadow: rgba(15, 23, 42, 0.06);
-      --sales: #28a745;
-      --purchases: #007bff;
-      --profit: #ffc107;
-      --receivables: #dc3545;
-      --payables: #6c757d;
+      --accent: #6b46c1; /* Deeper purple */
+      --muted: #6b7280;
+      --border: #e5e7eb;
+      --bg: #f9fafb;
+      --card-bg: #ffffff;
+      --text: #111827;
+      --shadow: rgba(15, 23, 42, 0.06);
+      --sales: #10b981; /* Emerald */
+      --purchases: #3b82f6; /* Blue */
+      --profit: #f59e0b; /* Amber */
+      --receivables: #ef4444; /* Red */
+      --payables: #6b7280; /* Gray */
     }
     [data-theme="dark"] {
-      --accent: #14a8a5; --muted: #9ca3af; --border: #374151; --bg: #111827;
-      --card-bg: #1f2937; --text: #f3f4f6; --shadow: rgba(0, 0, 0, 0.2);
-      --sales: #28a745;
-      --purchases: #007bff;
-      --profit: #ffc107;
-      --receivables: #dc3545;
-      --payables: #6c757d;
+      --accent: #a78bfa; /* Lighter purple */
+      --muted: #9ca3af;
+      --border: #374151;
+      --bg: #111827;
+      --card-bg: #1f2937;
+      --text: #f3f4f6;
+      --shadow: rgba(0, 0, 0, 0.2);
+      --sales: #10b981;
+      --purchases: #3b82f6;
+      --profit: #f59e0b;
+      --receivables: #ef4444;
+      --payables: #9ca3af;
     }
     body {
         font-family: 'Inter', system-ui, sans-serif;
@@ -80,10 +90,10 @@
         transition: all 0.2s;
     }
     nav button:hover {
-        background: rgba(43, 122, 120, 0.08);
+        background: rgba(107, 70, 193, 0.08);
     }
     nav button.active {
-        background: linear-gradient(90deg, rgba(43,122,120,.1), rgba(43,122,120,.05));
+        background: linear-gradient(90deg, rgba(107,70,193,.1), rgba(107,70,193,.05));
         font-weight: 600;
         color: var(--accent);
     }
@@ -139,6 +149,10 @@
         border: none;
         cursor: pointer;
         font-weight: 500;
+        transition: background 0.2s ease, transform 0.2s ease;
+    }
+    button.btn:hover {
+        transform: translateY(-1px);
     }
     button.primary { background: var(--accent); color: white; }
     button.ghost { background: transparent; border: 1px solid var(--border); color: var(--text); }
@@ -200,6 +214,10 @@
         padding: 6px 10px;
         border-radius: 8px;
         cursor: pointer;
+        transition: background 0.2s ease;
+    }
+    .theme-toggle:hover {
+        background: rgba(255,255,255,0.3);
     }
     .dashboard-grid {
         display: grid;
@@ -216,6 +234,9 @@
         cursor: pointer;
         position: relative;
         overflow: hidden;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
     }
     .dashboard-card:hover {
         transform: translateY(-4px);
@@ -246,13 +267,37 @@
         font-weight: 700;
         margin-top: 8px;
     }
-    .dashboard-sales { background: linear-gradient(135deg, #28a745, #218838); }
-    .dashboard-purchases { background: linear-gradient(135deg, #007bff, #0056b3); }
-    .dashboard-profit { background: linear-gradient(135deg, #ffc107, #d39e00); }
-    .dashboard-receivables { background: linear-gradient(135deg, #dc3545, #c82333); }
-    .dashboard-payables { background: linear-gradient(135deg, #6c757d, #5a6268); }
+    .dashboard-sales { background: linear-gradient(135deg, #10b981, #059669); }
+    .dashboard-purchases { background: linear-gradient(135deg, #3b82f6, #2563eb); }
+    .dashboard-profit { background: linear-gradient(135deg, #f59e0b, #d97706); }
+    .dashboard-receivables { background: linear-gradient(135deg, #ef4444, #dc2626); }
+    .dashboard-payables { background: linear-gradient(135deg, #6b7280, #4b5563); }
 
     .clickable { cursor: pointer; }
+
+    /* Auto-complete dropdown styling */
+    .autocomplete {
+      position: relative;
+    }
+    .autocomplete-list {
+      position: absolute;
+      z-index: 1;
+      width: 100%;
+      max-height: 200px;
+      overflow-y: auto;
+      border: 1px solid var(--border);
+      background: var(--card-bg);
+      border-radius: 8px;
+      box-shadow: 0 4px 12px var(--shadow);
+    }
+    .autocomplete-list-item {
+      padding: 10px;
+      cursor: pointer;
+      font-size: 14px;
+    }
+    .autocomplete-list-item:hover {
+      background: rgba(107, 70, 193, 0.08);
+    }
 
     @media (max-width: 880px) {
         .wrap {
@@ -319,6 +364,15 @@
 
   <footer class="no-print">Fully offline. Data saved in browser. Export/Import JSON in Reports.</footer>
   <div id="toast" class="toast no-print"></div>
+  <div id="modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:200; align-items:center; justify-content:center;">
+    <div style="background:var(--card-bg); padding:24px; border-radius:12px; box-shadow:0 6px 18px rgba(0,0,0,0.2); max-width:400px; width:90%;">
+      <p id="modal-text" style="font-size:16px; margin-bottom:24px;"></p>
+      <div style="display:flex; justify-content:flex-end; gap:12px;">
+        <button id="modal-cancel" class="btn ghost">Cancel</button>
+        <button id="modal-confirm" class="btn danger">Confirm</button>
+      </div>
+    </div>
+  </div>
 
   <script>
     const main = document.getElementById('main');
@@ -345,23 +399,44 @@
         localStorage.setItem('theme', isDark ? 'light' : 'dark');
     }
 
+    function showModal(message) {
+        return new Promise((resolve) => {
+            const modal = document.getElementById('modal');
+            const modalText = document.getElementById('modal-text');
+            const modalConfirm = document.getElementById('modal-confirm');
+            const modalCancel = document.getElementById('modal-cancel');
+
+            modalText.textContent = message;
+            modal.style.display = 'flex';
+
+            const handleConfirm = () => {
+                modal.style.display = 'none';
+                modalConfirm.removeEventListener('click', handleConfirm);
+                modalCancel.removeEventListener('click', handleCancel);
+                resolve(true);
+            };
+
+            const handleCancel = () => {
+                modal.style.display = 'none';
+                modalConfirm.removeEventListener('click', handleConfirm);
+                modalCancel.removeEventListener('click', handleCancel);
+                resolve(false);
+            };
+
+            modalConfirm.addEventListener('click', handleConfirm);
+            modalCancel.addEventListener('click', handleCancel);
+        });
+    }
+
     // New helper function to calculate profit for a single transaction (sale or purchase)
-    function calculateProfit(items, products, type) {
+    function calculateProfit(items, products) {
         return items.reduce((totalProfit, item) => {
             const product = products.find(p => p.id === item.productId);
             if (!product) return totalProfit;
-            const itemCost = product.cost;
-            const itemPrice = product.price;
-
-            if (type === 'sale') {
-                const profitPerItem = (item.price - itemCost) || 0;
-                return totalProfit + (profitPerItem * (item.qty || 0));
-            } else if (type === 'purchase') {
-                // This logic seems inverted for purchase, assuming you meant something else
-                // For now, let's assume profit is only calculated on sales for simplicity.
-                return totalProfit;
-            }
-            return totalProfit;
+            const itemCost = product.cost || 0;
+            const itemPrice = item.price || 0;
+            const profitPerItem = itemPrice - itemCost;
+            return totalProfit + (profitPerItem * (item.qty || 0));
         }, 0);
     }
 
@@ -397,8 +472,6 @@
             new_purchase: renderPurchaseForm,
             payments: renderPayments,
             reports: renderReports,
-            ledger: renderLedgerSelection,
-            contact_ledger: renderContactLedger,
             receivables: renderReceivables,
             payables: renderPayables,
         }[tab];
@@ -416,7 +489,7 @@
 
       const totalSales = filteredSales.reduce((s,x) => s + Number(x.total||0), 0);
       const totalPurchases = filteredPurchases.reduce((s,x) => s + Number(x.total||0), 0);
-      const profit = filteredSales.reduce((s, x) => s + calculateProfit(x.items, products, 'sale'), 0);
+      const profit = filteredSales.reduce((s, x) => s + calculateProfit(x.items, products), 0);
 
       const receivables = sales.reduce((s,x) => s + (Number(x.total||0) - Number(x.paid||0)), 0);
       const payables = purchases.reduce((s,x) => s + (Number(x.total||0) - Number(x.paid||0)), 0);
@@ -511,43 +584,66 @@
         if (!item) return;
         const form = document.getElementById('crud-form');
         for (const prop in item) {
-            if (form.elements[prop]) form.elements[prop].value = item[prop];
+            if (form.elements[prop]) {
+                form.elements[prop].value = item[prop];
+            }
         }
         window.scrollTo(0, 0);
     }
-    window.deleteItem = (key, id) => {
-        if (!confirm('Are you sure you want to delete this item?')) return;
-        save(key, load(key).filter(i => i.id !== id));
-        showToast('Item deleted.');
-        render(key);
-    }
 
+    window.deleteItem = async (key, id) => {
+        if (await showModal('Are you sure you want to delete this item?')) {
+            save(key, load(key).filter(i => i.id !== id));
+            showToast('Item deleted.');
+            render(key);
+        }
+    }
+    
     // ========== RENDER: PRODUCTS, CUSTOMERS, SUPPLIERS (USING GENERIC CRUD) ==========
     function renderProducts() {
         renderCRUD({
-            key: 'products', title: 'Products & Stock', singular: 'Product',
+            key: 'products',
+            title: 'Products & Stock',
+            singular: 'Product',
             fields: [
-                { name: 'sku', label: 'SKU', flex: 1 }, { name: 'name', label: 'Product Name', flex: 2 },
-                { name: 'price', label: 'Sale Price (₹)', type: 'number', flex: 1 }, { name: 'cost', label: 'Cost Price (₹)', type: 'number', flex: 1 },
-                { name: 'stock', label: 'Stock', type: 'number', flex: 1 }, { name: 'minStock', label: 'Min Stock', type: 'number', flex: 1 },
+                { name: 'sku', label: 'SKU', flex: 1 },
+                { name: 'name', label: 'Product Name', flex: 2 },
+                { name: 'price', label: 'Sale Price (₹)', type: 'number', flex: 1 },
+                { name: 'cost', label: 'Cost Price (₹)', type: 'number', flex: 1 },
+                { name: 'stock', label: 'Stock', type: 'number', flex: 1 },
+                { name: 'minStock', label: 'Min Stock', type: 'number', flex: 1 },
                 { name: 'unit', label: 'Unit (pcs, kg)', flex: 1 },
             ],
             headers: ['SKU', 'Name', 'Sale Price', 'Cost', 'Stock'],
             row: p => [p.sku, p.name, `₹ ${fmt(p.price)}`, `₹ ${fmt(p.cost)}`, `${p.stock||0} ${p.unit||''}`]
         });
     }
+
     function renderCustomers() {
         renderCRUD({
-            key: 'customers', title: 'Customers', singular: 'Customer',
-            fields: [ { name: 'name', label: 'Name', flex: 2 }, { name: 'phone', label: 'Phone', flex: 1 }, { name: 'email', label: 'Email', flex: 1 } ],
+            key: 'customers',
+            title: 'Customers',
+            singular: 'Customer',
+            fields: [
+                { name: 'name', label: 'Name', flex: 2 },
+                { name: 'phone', label: 'Phone', flex: 1 },
+                { name: 'email', label: 'Email', flex: 1 }
+            ],
             headers: ['Name', 'Phone', 'Email'],
             row: c => [c.name, c.phone, c.email]
         });
     }
+
     function renderSuppliers() {
         renderCRUD({
-            key: 'suppliers', title: 'Suppliers', singular: 'Supplier',
-            fields: [ { name: 'name', label: 'Name', flex: 2 }, { name: 'phone', label: 'Phone', flex: 1 }, { name: 'email', label: 'Email', flex: 1 } ],
+            key: 'suppliers',
+            title: 'Suppliers',
+            singular: 'Supplier',
+            fields: [
+                { name: 'name', label: 'Name', flex: 2 },
+                { name: 'phone', label: 'Phone', flex: 1 },
+                { name: 'email', label: 'Email', flex: 1 }
+            ],
             headers: ['Name', 'Phone', 'Email'],
             row: s => [s.name, s.phone, s.email]
         });
@@ -562,12 +658,21 @@
             </div>
             <div class="card">
                 <table>
-                    <thead><tr><th>Date</th><th>Invoice #</th><th>Customer</th><th class="right">Total</th><th class="right">Profit</th><th class="right">Due</th></tr></thead>
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Invoice #</th>
+                            <th>Customer</th>
+                            <th class="right">Total</th>
+                            <th class="right">Profit</th>
+                            <th class="right">Due</th>
+                        </tr>
+                    </thead>
                     <tbody>
                         ${sales.map(s => {
                             const cust = customers.find(c => c.id === s.customerId)?.name || 'N/A';
                             const due = (s.total || 0) - (s.paid || 0);
-                            const profit = calculateProfit(s.items, products, 'sale');
+                            const profit = calculateProfit(s.items, products);
                             return `<tr class="clickable" onclick="render('new_sale', '${s.id}')">
                                 <td>${s.date}</td>
                                 <td>${s.invoice}</td>
@@ -575,7 +680,7 @@
                                 <td class="right">₹ ${fmt(s.total)}</td>
                                 <td class="right">₹ ${fmt(profit)}</td>
                                 <td class="right" style="color:${due > 0 ? '#ef4444' : 'inherit'}">₹ ${fmt(due)}</td>
-                            </tr>`
+                            </tr>`;
                         }).join('')}
                     </tbody>
                 </table>
@@ -584,206 +689,184 @@
 
     // ========== RENDER: NEW/EDIT SALE FORM ==========
     function renderSaleForm({ products, customers }, saleId) {
-        let sale = load('sales').find(s => s.id === saleId) || { id: '', date: today(), customerId: '', invoice: '', paid: 0, total: 0, items: [] };
-
-        const generateItemsTable = (items) => `
-            <table>
-                <thead>
-                    <tr>
-                        <th>Product</th>
-                        <th class="right">Price</th>
-                        <th class="right">Qty</th>
-                        <th class="right">Subtotal</th>
-                        <th>Actions</th>
-                    </tr>
-                </thead>
-                <tbody id="sale-items-table-body">
-                    ${items.map(item => {
-                        const product = products.find(p => p.id === item.productId);
-                        return `
-                            <tr>
-                                <td>${product?.name || 'N/A'}</td>
-                                <td class="right">₹ ${fmt(item.price)}</td>
-                                <td class="right">${item.qty} ${product?.unit || ''}</td>
-                                <td class="right">₹ ${fmt(item.price * item.qty)}</td>
-                                <td><button type="button" class="btn danger small" onclick="removeSaleItem('${item.id}')">Remove</button></td>
-                            </tr>
-                        `;
-                    }).join('')}
-                </tbody>
-            </table>
-        `;
+        let sale = load('sales').find(s => s.id === saleId) || { id: uid('s'), date: today(), items: [], paid: 0 };
 
         main.innerHTML = `
-            <h2>${saleId ? 'Edit Sale' : 'New Sale'}</h2>
+            <h2>${saleId ? 'Edit Sales Invoice' : 'New Sales Invoice'}</h2>
             <div class="card">
                 <form id="sale-form">
                     <input type="hidden" name="id" value="${sale.id}">
                     <div class="row">
-                        <div style="flex:1"><label>Invoice #</label><input type="text" name="invoice" value="${sale.invoice}" required></div>
-                        <div style="flex:1"><label>Date</label><input type="date" name="date" value="${sale.date}" required></div>
-                        <div style="flex:1"><label>Customer</label><select name="customerId" required>${customers.map(c => `<option value="${c.id}" ${sale.customerId === c.id ? 'selected' : ''}>${c.name}</option>`).join('')}</select></div>
+                        <div style="flex:1"><label>Invoice #</label><input type="text" name="invoice" id="invoice-input" value="${sale.invoice || ''}" placeholder="Leave empty for auto-generation"></div>
+                        <div style="flex:1"><label>Date</label><input type="date" name="date" value="${sale.date}"></div>
                     </div>
-                    <hr style="border:0;border-top:1px solid var(--border);margin:16px 0;">
                     <div class="row">
-                        <div style="flex:2"><label>Add Product</label><select id="product-select"><option value="">Select a Product</option>${products.map(p => `<option value="${p.id}">${p.name} (Stock: ${p.stock})</option>`).join('')}</select></div>
-                        <div style="flex:1"><label>Quantity</label><input type="number" id="qty-input" min="1" value="1"></div>
-                        <div style="flex:1"><label>Price (₹)</label><input type="number" id="price-input" min="0" step="0.01"></div>
-                        <div style="margin-top:21px;"><button type="button" class="btn primary" id="add-item-btn">Add Item</button></div>
+                        <div style="flex:2">
+                          <label>Customer</label>
+                          <select name="customerId">
+                            ${customers.map(c => `<option value="${c.id}" ${sale.customerId === c.id ? 'selected' : ''}>${c.name}</option>`).join('')}
+                          </select>
+                        </div>
                     </div>
                 </form>
-                <div id="sale-items-container">
-                    ${sale.items.length ? generateItemsTable(sale.items) : '<div class="small" style="margin-top:16px;">No items added yet.</div>'}
+                <div class="row" style="align-items:flex-end;">
+                    <div style="flex:2">
+                      <label>Select Product</label>
+                      <div class="autocomplete">
+                        <input type="text" id="product-search-input" placeholder="Start typing to search products...">
+                        <div id="product-autocomplete-list" class="autocomplete-list" style="display:none;"></div>
+                      </div>
+                    </div>
+                    <div style="flex:1"><label>Quantity</label><input type="number" id="item-qty" value="1"></div>
+                    <div style="flex:1"><label>Price (₹)</label><input type="number" id="item-price" value="" step="0.01"></div>
+                    <div style="flex:0; margin-top:21px;"><button class="btn primary" id="add-item-btn">Add</button></div>
                 </div>
-                <div class="row" style="justify-content:flex-end; font-size:18px; font-weight:600; margin-top:16px;">Total: ₹ <span id="total-display">${fmt(sale.total)}</span></div>
-                <div class="row" style="justify-content:flex-end; align-items:flex-end; gap:8px;">
-                    <div style="flex:1;"><label>Amount Paid (₹)</label><input type="number" id="paid-input" min="0" step="0.01" value="${sale.paid}"></div>
-                    <div style="margin-top:21px;"><button type="button" class="btn primary" id="save-sale-btn">Save Invoice</button></div>
-                    ${saleId ? `<div style="margin-top:21px;"><button type="button" class="btn danger" onclick="deleteItem('sales', '${saleId}')">Delete Invoice</button></div>` : ''}
+
+                <div class="card" style="margin-top:24px;">
+                    <h3>Items on this Invoice</h3>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Product</th>
+                                <th class="right">Qty</th>
+                                <th class="right">Price (₹)</th>
+                                <th class="right">Subtotal (₹)</th>
+                                <th class="center">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="items-table-body">
+                        </tbody>
+                    </table>
                 </div>
-            </div>
-            <div id="sale-toast" class="toast"></div>`;
 
-        const productSelect = document.getElementById('product-select');
-        const qtyInput = document.getElementById('qty-input');
-        const priceInput = document.getElementById('price-input');
-        const addItemBtn = document.getElementById('add-item-btn');
-        const paidInput = document.getElementById('paid-input');
-        const saveSaleBtn = document.getElementById('save-sale-btn');
+                <div class="row" style="margin-top:24px; justify-content:flex-end; gap:24px;">
+                  <div style="flex:1; max-width:200px;">
+                    <label>Total Amount</label>
+                    <input type="number" id="sale-total-input" disabled>
+                  </div>
+                  <div style="flex:1; max-width:200px;">
+                    <label>Amount Paid</label>
+                    <input type="number" id="sale-paid-input" name="paid" value="${sale.paid}">
+                  </div>
+                </div>
+                <div class="row" style="justify-content:flex-end; margin-top:16px;">
+                  <button type="button" class="btn ghost" onclick="redirect('sales')">Cancel</button>
+                  <button type="submit" class="btn primary" form="sale-form">Save Invoice</button>
+                </div>
+            </div>`;
 
-        let currentSale = sale;
-
-        const updateTotals = () => {
-            currentSale.total = currentSale.items.reduce((sum, item) => sum + (Number(item.price) * Number(item.qty)), 0);
-            document.getElementById('total-display').textContent = fmt(currentSale.total);
-            paidInput.value = currentSale.paid || 0;
+        const renderItemsTable = () => {
+            const itemsTableBody = document.getElementById('items-table-body');
+            itemsTableBody.innerHTML = sale.items.map((item, index) => {
+                const product = products.find(p => p.id === item.productId);
+                const subtotal = (item.qty || 0) * (item.price || 0);
+                return `
+                    <tr>
+                        <td>${product.name}</td>
+                        <td class="right">${item.qty} ${product.unit}</td>
+                        <td class="right">₹ ${fmt(item.price)}</td>
+                        <td class="right">₹ ${fmt(subtotal)}</td>
+                        <td class="center"><button type="button" class="btn danger small" onclick="removeItem(${index})">Del</button></td>
+                    </tr>`;
+            }).join('');
+            const total = sale.items.reduce((sum, item) => sum + ((item.qty || 0) * (item.price || 0)), 0);
+            document.getElementById('sale-total-input').value = total.toFixed(2);
+            sale.total = total;
         };
 
-        const renderItems = () => {
-            const container = document.getElementById('sale-items-container');
-            container.innerHTML = currentSale.items.length ? generateItemsTable(currentSale.items) : '<div class="small" style="margin-top:16px;">No items added yet.</div>';
-            updateTotals();
-        };
+        const addItem = () => {
+            const productInput = document.getElementById('product-search-input');
+            const qtyInput = document.getElementById('item-qty');
+            const priceInput = document.getElementById('item-price');
+            const selectedProduct = products.find(p => p.name === productInput.value);
 
-        productSelect.onchange = () => {
-            const product = products.find(p => p.id === productSelect.value);
-            if (product) {
-                priceInput.value = product.price;
-                qtyInput.value = 1;
-            } else {
-                priceInput.value = '';
-                qtyInput.value = 1;
-            }
-        };
-
-        addItemBtn.onclick = () => {
-            const productId = productSelect.value;
-            const qty = Number(qtyInput.value);
-            const price = Number(priceInput.value);
-
-            if (!productId || qty <= 0 || price < 0) {
-                showToast('Please select a product and enter valid quantity/price.');
+            if (!selectedProduct || !qtyInput.value) {
+                showToast("Please select a product and enter a quantity.");
                 return;
             }
 
-            const product = products.find(p => p.id === productId);
-            if (qty > product.stock) {
-                showToast(`Not enough stock! Max available: ${product.stock}`);
-                return;
-            }
+            const item = {
+                productId: selectedProduct.id,
+                qty: Number(qtyInput.value),
+                price: Number(priceInput.value) || selectedProduct.price,
+            };
 
-            const existingItem = currentSale.items.find(item => item.productId === productId);
-            if (existingItem) {
-                existingItem.qty = Number(existingItem.qty) + qty;
-                existingItem.price = price;
-            } else {
-                currentSale.items.push({ id: uid(), productId, qty, price });
-            }
-            renderItems();
-            productSelect.value = '';
+            sale.items.push(item);
+            productInput.value = '';
             qtyInput.value = 1;
             priceInput.value = '';
+            renderItemsTable();
         };
 
-        window.removeSaleItem = (itemId) => {
-            currentSale.items = currentSale.items.filter(item => item.id !== itemId);
-            renderItems();
+        window.removeItem = (index) => {
+            sale.items.splice(index, 1);
+            renderItemsTable();
+        };
+        
+        document.getElementById('add-item-btn').onclick = addItem;
+        document.getElementById('sale-paid-input').oninput = e => sale.paid = Number(e.target.value);
+
+        // Auto-complete logic for product search
+        const productSearchInput = document.getElementById('product-search-input');
+        const productAutocompleteList = document.getElementById('product-autocomplete-list');
+        productSearchInput.oninput = () => {
+          const query = productSearchInput.value.toLowerCase();
+          const filteredProducts = products.filter(p => p.name.toLowerCase().includes(query) || p.sku.toLowerCase().includes(query));
+          
+          if (query && filteredProducts.length > 0) {
+            productAutocompleteList.innerHTML = filteredProducts.map(p => 
+              `<div class="autocomplete-list-item" data-product-id="${p.id}">${p.name} (${p.sku})</div>`).join('');
+            productAutocompleteList.style.display = 'block';
+          } else {
+            productAutocompleteList.style.display = 'none';
+          }
         };
 
-        saveSaleBtn.onclick = () => {
-            const form = document.getElementById('sale-form');
+        productAutocompleteList.onclick = (e) => {
+          const item = e.target.closest('.autocomplete-list-item');
+          if (item) {
+            const productName = item.textContent.split('(')[0].trim();
+            const selectedProduct = products.find(p => p.name === productName);
+            productSearchInput.value = productName;
+            document.getElementById('item-price').value = selectedProduct.price;
+            productAutocompleteList.style.display = 'none';
+          }
+        };
+
+        document.getElementById('sale-form').onsubmit = e => {
+            e.preventDefault();
+            const form = e.target;
             const formData = new FormData(form);
-            const invoice = formData.get('invoice');
-            const date = formData.get('date');
-            const customerId = formData.get('customerId');
-            const paid = Number(paidInput.value);
-
-            if (!invoice || !date || !customerId || currentSale.items.length === 0) {
-                showToast('Please fill out all fields and add at least one item.');
-                return;
-            }
-
+            const savedSale = load('sales').find(s => s.id === sale.id);
             const allSales = load('sales');
-            const allProducts = load('products');
-            const updatedProducts = [...allProducts];
 
-            currentSale.invoice = invoice;
-            currentSale.date = date;
-            currentSale.customerId = customerId;
-            currentSale.paid = paid;
-
-            if (saleId) { // Edit existing sale
-                const originalSale = allSales.find(s => s.id === saleId);
-                const salesItemsDiff = getItemsDiff(originalSale.items, currentSale.items);
-
-                salesItemsDiff.added.forEach(item => {
-                    const product = updatedProducts.find(p => p.id === item.productId);
-                    if (product) product.stock = Number(product.stock) - Number(item.qty);
-                });
-                salesItemsDiff.removed.forEach(item => {
-                    const product = updatedProducts.find(p => p.id === item.productId);
-                    if (product) product.stock = Number(product.stock) + Number(item.qty);
-                });
-                salesItemsDiff.updated.forEach(item => {
-                    const product = updatedProducts.find(p => p.id === item.productId);
-                    if (product) product.stock = Number(product.stock) + Number(item.oldQty) - Number(item.newQty);
-                });
-
-                save('sales', allSales.map(s => s.id === saleId ? currentSale : s));
-
-            } else { // New sale
-                currentSale.id = uid('s');
-                allSales.unshift(currentSale);
-                save('sales', allSales);
-
-                currentSale.items.forEach(item => {
-                    const product = updatedProducts.find(p => p.id === item.productId);
-                    if (product) product.stock = Number(product.stock) - Number(item.qty);
-                });
+            // Handle auto-generation of invoice number if not manually entered
+            if (!formData.get('invoice')) {
+                const existingInvoices = allSales.map(s => Number(s.invoice)).filter(n => !isNaN(n));
+                const nextInvoiceNum = (existingInvoices.length > 0) ? Math.max(...existingInvoices) + 1 : 1001;
+                sale.invoice = nextInvoiceNum.toString();
+            } else {
+                sale.invoice = formData.get('invoice');
             }
 
-            save('products', updatedProducts);
+            sale.customerId = formData.get('customerId');
+            sale.date = formData.get('date');
+            sale.paid = Number(formData.get('paid'));
+
+            if (savedSale) {
+                save('sales', allSales.map(s => s.id === sale.id ? sale : s));
+            } else {
+                allSales.unshift(sale);
+                save('sales', allSales);
+            }
             showToast('Invoice saved successfully.');
-            render('sales');
+            redirect('sales');
         };
-    }
 
-    // Helper to compare item lists for stock adjustments
-    function getItemsDiff(oldItems, newItems) {
-        const added = newItems.filter(newItem => !oldItems.find(oldItem => oldItem.productId === newItem.productId));
-        const removed = oldItems.filter(oldItem => !newItems.find(newItem => newItem.productId === oldItem.productId));
-        const updated = newItems.filter(newItem => {
-            const oldItem = oldItems.find(oldItem => oldItem.productId === newItem.productId);
-            return oldItem && oldItem.qty !== newItem.qty;
-        }).map(newItem => ({
-            ...newItem,
-            oldQty: oldItems.find(oldItem => oldItem.productId === newItem.productId).qty,
-            newQty: newItem.qty
-        }));
-        return { added, removed, updated };
+        renderItemsTable();
     }
-
-    // ========== RENDER: PURCHASE BILLS ==========
+    
+    // ========== RENDER: PURCHASES LIST ==========
     function renderPurchases({ purchases, suppliers, products }) {
         main.innerHTML = `
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
@@ -792,15 +875,23 @@
             </div>
             <div class="card">
                 <table>
-                    <thead><tr><th>Date</th><th>Bill #</th><th>Supplier</th><th class="right">Total</th><th class="right">Due</th></tr></thead>
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Bill #</th>
+                            <th>Supplier</th>
+                            <th class="right">Total</th>
+                            <th class="right">Due</th>
+                        </tr>
+                    </thead>
                     <tbody>
                         ${purchases.map(p => {
-                            const sup = suppliers.find(s => s.id === p.supplierId)?.name || 'N/A';
+                            const supp = suppliers.find(s => s.id === p.supplierId)?.name || 'N/A';
                             const due = (p.total || 0) - (p.paid || 0);
                             return `<tr class="clickable" onclick="render('new_purchase', '${p.id}')">
                                 <td>${p.date}</td>
                                 <td>${p.bill}</td>
-                                <td>${sup}</td>
+                                <td>${supp}</td>
                                 <td class="right">₹ ${fmt(p.total)}</td>
                                 <td class="right" style="color:${due > 0 ? '#ef4444' : 'inherit'}">₹ ${fmt(due)}</td>
                             </tr>`;
@@ -812,284 +903,334 @@
 
     // ========== RENDER: NEW/EDIT PURCHASE FORM ==========
     function renderPurchaseForm({ products, suppliers }, purchaseId) {
-        let purchase = load('purchases').find(p => p.id === purchaseId) || { id: '', date: today(), supplierId: '', bill: '', paid: 0, total: 0, items: [] };
-
-        const generateItemsTable = (items) => `
-            <table>
-                <thead>
-                    <tr>
-                        <th>Product</th>
-                        <th class="right">Cost</th>
-                        <th class="right">Qty</th>
-                        <th class="right">Subtotal</th>
-                        <th>Actions</th>
-                    </tr>
-                </thead>
-                <tbody id="purchase-items-table-body">
-                    ${items.map(item => {
-                        const product = products.find(p => p.id === item.productId);
-                        return `
-                            <tr>
-                                <td>${product?.name || 'N/A'}</td>
-                                <td class="right">₹ ${fmt(item.cost)}</td>
-                                <td class="right">${item.qty} ${product?.unit || ''}</td>
-                                <td class="right">₹ ${fmt(item.cost * item.qty)}</td>
-                                <td><button type="button" class="btn danger small" onclick="removePurchaseItem('${item.id}')">Remove</button></td>
-                            </tr>
-                        `;
-                    }).join('')}
-                </tbody>
-            </table>
-        `;
+        let purchase = load('purchases').find(p => p.id === purchaseId) || { id: uid('p'), date: today(), items: [], paid: 0 };
 
         main.innerHTML = `
-            <h2>${purchaseId ? 'Edit Bill' : 'New Bill'}</h2>
+            <h2>${purchaseId ? 'Edit Purchase Bill' : 'New Purchase Bill'}</h2>
             <div class="card">
                 <form id="purchase-form">
                     <input type="hidden" name="id" value="${purchase.id}">
                     <div class="row">
-                        <div style="flex:1"><label>Bill #</label><input type="text" name="bill" value="${purchase.bill}" required></div>
-                        <div style="flex:1"><label>Date</label><input type="date" name="date" value="${purchase.date}" required></div>
-                        <div style="flex:1"><label>Supplier</label><select name="supplierId" required>${suppliers.map(s => `<option value="${s.id}" ${purchase.supplierId === s.id ? 'selected' : ''}>${s.name}</option>`).join('')}</select></div>
+                        <div style="flex:1"><label>Bill #</label><input type="text" name="bill" id="bill-input" value="${purchase.bill || ''}" placeholder="Leave empty for auto-generation"></div>
+                        <div style="flex:1"><label>Date</label><input type="date" name="date" value="${purchase.date}"></div>
                     </div>
-                    <hr style="border:0;border-top:1px solid var(--border);margin:16px 0;">
                     <div class="row">
-                        <div style="flex:2"><label>Add Product</label><select id="product-select"><option value="">Select a Product</option>${products.map(p => `<option value="${p.id}">${p.name}</option>`).join('')}</select></div>
-                        <div style="flex:1"><label>Quantity</label><input type="number" id="qty-input" min="1" value="1"></div>
-                        <div style="flex:1"><label>Cost (₹)</label><input type="number" id="cost-input" min="0" step="0.01"></div>
-                        <div style="margin-top:21px;"><button type="button" class="btn primary" id="add-item-btn">Add Item</button></div>
+                        <div style="flex:2">
+                            <label>Supplier</label>
+                            <select name="supplierId">
+                                ${suppliers.map(s => `<option value="${s.id}" ${purchase.supplierId === s.id ? 'selected' : ''}>${s.name}</option>`).join('')}
+                            </select>
+                        </div>
                     </div>
                 </form>
-                <div id="purchase-items-container">
-                    ${purchase.items.length ? generateItemsTable(purchase.items) : '<div class="small" style="margin-top:16px;">No items added yet.</div>'}
-                </div>
-                <div class="row" style="justify-content:flex-end; font-size:18px; font-weight:600; margin-top:16px;">Total: ₹ <span id="total-display">${fmt(purchase.total)}</span></div>
-                <div class="row" style="justify-content:flex-end; align-items:flex-end; gap:8px;">
-                    <div style="flex:1;"><label>Amount Paid (₹)</label><input type="number" id="paid-input" min="0" step="0.01" value="${purchase.paid}"></div>
-                    <div style="margin-top:21px;"><button type="button" class="btn primary" id="save-purchase-btn">Save Bill</button></div>
-                    ${purchaseId ? `<div style="margin-top:21px;"><button type="button" class="btn danger" onclick="deleteItem('purchases', '${purchaseId}')">Delete Bill</button></div>` : ''}
-                </div>
-            </div>
-            <div id="purchase-toast" class="toast"></div>`;
-
-        const productSelect = document.getElementById('product-select');
-        const qtyInput = document.getElementById('qty-input');
-        const costInput = document.getElementById('cost-input');
-        const addItemBtn = document.getElementById('add-item-btn');
-        const paidInput = document.getElementById('paid-input');
-        const savePurchaseBtn = document.getElementById('save-purchase-btn');
-
-        let currentPurchase = purchase;
-
-        const updateTotals = () => {
-            currentPurchase.total = currentPurchase.items.reduce((sum, item) => sum + (Number(item.cost) * Number(item.qty)), 0);
-            document.getElementById('total-display').textContent = fmt(currentPurchase.total);
-            paidInput.value = currentPurchase.paid || 0;
-        };
-
-        const renderItems = () => {
-            const container = document.getElementById('purchase-items-container');
-            container.innerHTML = currentPurchase.items.length ? generateItemsTable(currentPurchase.items) : '<div class="small" style="margin-top:16px;">No items added yet.</div>';
-            updateTotals();
-        };
-
-        productSelect.onchange = () => {
-            const product = products.find(p => p.id === productSelect.value);
-            if (product) {
-                costInput.value = product.cost;
-                qtyInput.value = 1;
-            } else {
-                costInput.value = '';
-                qtyInput.value = 1;
-            }
-        };
-
-        addItemBtn.onclick = () => {
-            const productId = productSelect.value;
-            const qty = Number(qtyInput.value);
-            const cost = Number(costInput.value);
-
-            if (!productId || qty <= 0 || cost < 0) {
-                showToast('Please select a product and enter valid quantity/cost.');
-                return;
-            }
-            const existingItem = currentPurchase.items.find(item => item.productId === productId);
-            if (existingItem) {
-                existingItem.qty = Number(existingItem.qty) + qty;
-                existingItem.cost = cost;
-            } else {
-                currentPurchase.items.push({ id: uid(), productId, qty, cost });
-            }
-            renderItems();
-            productSelect.value = '';
-            qtyInput.value = 1;
-            costInput.value = '';
-        };
-
-        window.removePurchaseItem = (itemId) => {
-            currentPurchase.items = currentPurchase.items.filter(item => item.id !== itemId);
-            renderItems();
-        };
-
-        savePurchaseBtn.onclick = () => {
-            const form = document.getElementById('purchase-form');
-            const formData = new FormData(form);
-            const bill = formData.get('bill');
-            const date = formData.get('date');
-            const supplierId = formData.get('supplierId');
-            const paid = Number(paidInput.value);
-
-            if (!bill || !date || !supplierId || currentPurchase.items.length === 0) {
-                showToast('Please fill out all fields and add at least one item.');
-                return;
-            }
-
-            const allPurchases = load('purchases');
-            const allProducts = load('products');
-            const updatedProducts = [...allProducts];
-
-            currentPurchase.bill = bill;
-            currentPurchase.date = date;
-            currentPurchase.supplierId = supplierId;
-            currentPurchase.paid = paid;
-
-            if (purchaseId) { // Edit existing purchase
-                const originalPurchase = allPurchases.find(p => p.id === purchaseId);
-                const purchaseItemsDiff = getItemsDiff(originalPurchase.items, currentPurchase.items);
-
-                purchaseItemsDiff.added.forEach(item => {
-                    const product = updatedProducts.find(p => p.id === item.productId);
-                    if (product) product.stock = Number(product.stock) + Number(item.qty);
-                });
-                purchaseItemsDiff.removed.forEach(item => {
-                    const product = updatedProducts.find(p => p.id === item.productId);
-                    if (product) product.stock = Number(product.stock) - Number(item.qty);
-                });
-                purchaseItemsDiff.updated.forEach(item => {
-                    const product = updatedProducts.find(p => p.id === item.productId);
-                    if (product) product.stock = Number(product.stock) - Number(item.oldQty) + Number(item.newQty);
-                });
-
-                save('purchases', allPurchases.map(p => p.id === purchaseId ? currentPurchase : p));
-            } else { // New purchase
-                currentPurchase.id = uid('p');
-                allPurchases.unshift(currentPurchase);
-                save('purchases', allPurchases);
-
-                currentPurchase.items.forEach(item => {
-                    const product = updatedProducts.find(p => p.id === item.productId);
-                    if (product) product.stock = Number(product.stock) + Number(item.qty);
-                });
-            }
-
-            save('products', updatedProducts);
-            showToast('Bill saved successfully.');
-            render('purchases');
-        };
-    }
-
-    // ========== RENDER: PAYMENTS & RECEIPTS ==========
-    function renderPayments({ payments, sales, purchases, customers, suppliers }) {
-        main.innerHTML = `
-            <h2>Payments & Receipts</h2>
-            <div class="card">
-                <h3>Record Payment/Receipt</h3>
-                <form id="payment-form">
-                    <input type="hidden" name="id">
-                    <div class="row">
-                        <div style="flex:1"><label>Date</label><input type="date" name="date" value="${today()}" required></div>
-                        <div style="flex:2"><label>Type</label><select name="type" required>
-                            <option value="">Select Type</option>
-                            <option value="receipt">Receipt (from Customer)</option>
-                            <option value="payment">Payment (to Supplier)</option>
-                        </select></div>
-                        <div style="flex:3"><label>Contact</label><select name="contactId" id="contact-select" required><option value="">Select a Contact</option></select></div>
-                        <div style="flex:2"><label>Amount (₹)</label><input type="number" name="amount" min="0" step="0.01" required></div>
+                <div class="row" style="align-items:flex-end;">
+                    <div style="flex:2">
+                      <label>Select Product</label>
+                      <div class="autocomplete">
+                        <input type="text" id="purchase-product-search-input" placeholder="Start typing to search products...">
+                        <div id="purchase-product-autocomplete-list" class="autocomplete-list" style="display:none;"></div>
+                      </div>
                     </div>
-                    <div class="row" style="justify-content:flex-end; margin-top:16px;">
-                        <button type="submit" class="btn primary">Save Transaction</button>
-                    </div>
-                </form>
-            </div>
-            <div class="card">
-                <h3>All Transactions</h3>
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Date</th>
-                            <th>Type</th>
-                            <th>Contact</th>
-                            <th class="right">Amount (₹)</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        ${payments.map(p => {
-                            const contactName = (customers.find(c => c.id === p.contactId)?.name || suppliers.find(s => s.id === p.contactId)?.name) || 'N/A';
-                            return `<tr>
-                                <td>${p.date}</td>
-                                <td>${p.type}</td>
-                                <td>${contactName}</td>
-                                <td class="right">₹ ${fmt(p.amount)}</td>
-                                <td><button class="btn danger small" onclick="deleteItem('payments', '${p.id}')">Del</button></td>
-                            </tr>`;
-                        }).join('')}
-                    </tbody>
-                </table>
+                    <div style="flex:1"><label>Quantity</label><input type="number" id="purchase-item-qty" value="1"></div>
+                    <div style="flex:1"><label>Cost (₹)</label><input type="number" id="purchase-item-cost" value="" step="0.01"></div>
+                    <div style="flex:0; margin-top:21px;"><button class="btn primary" id="add-purchase-item-btn">Add</button></div>
+                </div>
+
+                <div class="card" style="margin-top:24px;">
+                    <h3>Items on this Bill</h3>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Product</th>
+                                <th class="right">Qty</th>
+                                <th class="right">Cost (₹)</th>
+                                <th class="right">Subtotal (₹)</th>
+                                <th class="center">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="purchase-items-table-body">
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="row" style="margin-top:24px; justify-content:flex-end; gap:24px;">
+                  <div style="flex:1; max-width:200px;">
+                    <label>Total Amount</label>
+                    <input type="number" id="purchase-total-input" disabled>
+                  </div>
+                  <div style="flex:1; max-width:200px;">
+                    <label>Amount Paid</label>
+                    <input type="number" id="purchase-paid-input" name="paid" value="${purchase.paid}">
+                  </div>
+                </div>
+                <div class="row" style="justify-content:flex-end; margin-top:16px;">
+                  <button type="button" class="btn ghost" onclick="redirect('purchases')">Cancel</button>
+                  <button type="submit" class="btn primary" form="purchase-form">Save Bill</button>
+                </div>
             </div>`;
 
-        const form = document.getElementById('payment-form');
-        const typeSelect = form.querySelector('select[name="type"]');
-        const contactSelect = document.getElementById('contact-select');
+        const renderPurchaseItemsTable = () => {
+            const itemsTableBody = document.getElementById('purchase-items-table-body');
+            itemsTableBody.innerHTML = purchase.items.map((item, index) => {
+                const product = products.find(p => p.id === item.productId);
+                const subtotal = (item.qty || 0) * (item.cost || 0);
+                return `
+                    <tr>
+                        <td>${product.name}</td>
+                        <td class="right">${item.qty} ${product.unit}</td>
+                        <td class="right">₹ ${fmt(item.cost)}</td>
+                        <td class="right">₹ ${fmt(subtotal)}</td>
+                        <td class="center"><button type="button" class="btn danger small" onclick="removePurchaseItem(${index})">Del</button></td>
+                    </tr>`;
+            }).join('');
+            const total = purchase.items.reduce((sum, item) => sum + ((item.qty || 0) * (item.cost || 0)), 0);
+            document.getElementById('purchase-total-input').value = total.toFixed(2);
+            purchase.total = total;
+        };
 
-        const updateContactOptions = () => {
-            const type = typeSelect.value;
-            let options = '<option value="">Select a Contact</option>';
-            if (type === 'receipt') {
-                options += customers.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
-            } else if (type === 'payment') {
-                options += suppliers.map(s => `<option value="${s.id}">${s.name}</option>`).join('');
+        const addPurchaseItem = () => {
+            const productInput = document.getElementById('purchase-product-search-input');
+            const qtyInput = document.getElementById('purchase-item-qty');
+            const costInput = document.getElementById('purchase-item-cost');
+            const selectedProduct = products.find(p => p.name === productInput.value);
+
+            if (!selectedProduct || !qtyInput.value) {
+                showToast("Please select a product and enter a quantity.");
+                return;
             }
-            contactSelect.innerHTML = options;
+
+            const item = {
+                productId: selectedProduct.id,
+                qty: Number(qtyInput.value),
+                cost: Number(costInput.value) || selectedProduct.cost,
+            };
+
+            purchase.items.push(item);
+            productInput.value = '';
+            qtyInput.value = 1;
+            costInput.value = '';
+            renderPurchaseItemsTable();
         };
 
-        typeSelect.onchange = updateContactOptions;
-        updateContactOptions();
+        window.removePurchaseItem = (index) => {
+            purchase.items.splice(index, 1);
+            renderPurchaseItemsTable();
+        };
+        
+        document.getElementById('add-purchase-item-btn').onclick = addPurchaseItem;
+        document.getElementById('purchase-paid-input').oninput = e => purchase.paid = Number(e.target.value);
 
-        form.onsubmit = (e) => {
+        // Auto-complete logic for product search on purchases
+        const productSearchInput = document.getElementById('purchase-product-search-input');
+        const productAutocompleteList = document.getElementById('purchase-product-autocomplete-list');
+        productSearchInput.oninput = () => {
+          const query = productSearchInput.value.toLowerCase();
+          const filteredProducts = products.filter(p => p.name.toLowerCase().includes(query) || p.sku.toLowerCase().includes(query));
+          
+          if (query && filteredProducts.length > 0) {
+            productAutocompleteList.innerHTML = filteredProducts.map(p => 
+              `<div class="autocomplete-list-item" data-product-id="${p.id}">${p.name} (${p.sku})</div>`).join('');
+            productAutocompleteList.style.display = 'block';
+          } else {
+            productAutocompleteList.style.display = 'none';
+          }
+        };
+
+        productAutocompleteList.onclick = (e) => {
+          const item = e.target.closest('.autocomplete-list-item');
+          if (item) {
+            const productName = item.textContent.split('(')[0].trim();
+            const selectedProduct = products.find(p => p.name === productName);
+            productSearchInput.value = productName;
+            document.getElementById('purchase-item-cost').value = selectedProduct.cost;
+            productAutocompleteList.style.display = 'none';
+          }
+        };
+
+        document.getElementById('purchase-form').onsubmit = e => {
             e.preventDefault();
-            const payment = Object.fromEntries(new FormData(form));
-            const allPayments = load('payments');
-            payment.id = uid('t');
-            allPayments.unshift(payment);
-            save('payments', allPayments);
-            showToast('Transaction saved.');
-            render('payments');
-        };
-    }
+            const form = e.target;
+            const formData = new FormData(form);
+            const savedPurchase = load('purchases').find(p => p.id === purchase.id);
+            const allPurchases = load('purchases');
 
+            // Handle auto-generation of bill number if not manually entered
+            if (!formData.get('bill')) {
+                const existingBills = allPurchases.map(p => Number(p.bill)).filter(n => !isNaN(n));
+                const nextBillNum = (existingBills.length > 0) ? Math.max(...existingBills) + 1 : 2001;
+                purchase.bill = nextBillNum.toString();
+            } else {
+                purchase.bill = formData.get('bill');
+            }
+
+            purchase.supplierId = formData.get('supplierId');
+            purchase.date = formData.get('date');
+            purchase.paid = Number(formData.get('paid'));
+
+            if (savedPurchase) {
+                save('purchases', allPurchases.map(p => p.id === purchase.id ? purchase : p));
+            } else {
+                allPurchases.unshift(purchase);
+                save('purchases', allPurchases);
+            }
+            showToast('Bill saved successfully.');
+            redirect('purchases');
+        };
+
+        renderPurchaseItemsTable();
+    }
+    
+    // ========== RENDER: PAYMENTS & RECEIPTS ==========
+    function renderPayments({ payments, sales, purchases }) {
+      main.innerHTML = `
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+            <h2>Payments & Receipts</h2>
+            <button class="btn primary no-print" onclick="render('new_payment_receipt')">New Entry</button>
+        </div>
+        <div class="card">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Type</th>
+                        <th>Contact</th>
+                        <th>Bill/Invoice #</th>
+                        <th class="right">Amount</th>
+                        <th class="center">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${payments.map(p => {
+                        let contactName = 'N/A';
+                        if (p.type === 'receipt') {
+                            const sale = sales.find(s => s.id === p.refId);
+                            contactName = load('customers').find(c => c.id === sale.customerId)?.name || 'N/A';
+                        } else {
+                            const purchase = purchases.find(b => b.id === p.refId);
+                            contactName = load('suppliers').find(s => s.id === purchase.supplierId)?.name || 'N/A';
+                        }
+                        const refNum = p.type === 'receipt' ? sales.find(s => s.id === p.refId)?.invoice : purchases.find(b => b.id === p.refId)?.bill;
+                        return `<tr>
+                            <td>${p.date}</td>
+                            <td>${p.type === 'receipt' ? 'Receipt' : 'Payment'}</td>
+                            <td>${contactName}</td>
+                            <td>${refNum}</td>
+                            <td class="right">₹ ${fmt(p.amount)}</td>
+                            <td class="center"><button class="btn danger small" onclick="deletePayment('${p.id}')">Del</button></td>
+                        </tr>`;
+                    }).join('')}
+                </tbody>
+            </table>
+        </div>`;
+    }
+    
     // ========== RENDER: REPORTS & EXPORT ==========
-    function renderReports({ sales, purchases, payments }) {
+    function renderReports({ sales, purchases, products, customers, suppliers }) {
         main.innerHTML = `
             <h2>Reports & Export</h2>
             <div class="card">
-                <h3>Export Data</h3>
-                <p>Export all your data as a JSON file. This is useful for backups or transferring data to another device.</p>
-                <button class="btn primary" id="export-btn">Export All Data</button>
+                <h3>Export/Import Data</h3>
+                <div class="row">
+                    <button class="btn ghost" onclick="exportData()">Export Data</button>
+                    <input type="file" id="import-file" style="display:none;" accept=".json">
+                    <button class="btn ghost" onclick="document.getElementById('import-file').click()">Import Data</button>
+                </div>
             </div>
             <div class="card">
-                <h3>Import Data</h3>
-                <p>Import a previously exported JSON file. <strong>Warning:</strong> This will permanently overwrite all existing data.</p>
+                <h3>Search Bills & Invoices</h3>
                 <div class="row">
-                    <div style="flex:1;"><input type="file" id="import-file" accept="application/json"></div>
-                    <div style="margin-top:21px;"><button class="btn danger" id="import-btn">Import Data</button></div>
+                    <div style="flex:1">
+                        <label>Search by Bill/Invoice #, Customer, or Supplier</label>
+                        <input type="text" id="report-search-input" placeholder="Start typing to search...">
+                    </div>
+                </div>
+                <div id="search-results-table"></div>
+            </div>
+            <div class="card">
+                <h3>Other Reports</h3>
+                <div class="row">
+                    <button class="btn ghost" onclick="redirect('receivables')">View Receivables</button>
+                    <button class="btn ghost" onclick="redirect('payables')">View Payables</button>
                 </div>
             </div>`;
 
-        document.getElementById('export-btn').onclick = () => {
-            const data = LS_KEYS.reduce((acc, k) => ({ ...acc, [k]: load(k) }), {});
-            const json = JSON.stringify(data, null, 2);
-            const blob = new Blob([json], { type: 'application/json' });
+        const searchInput = document.getElementById('report-search-input');
+        const resultsDiv = document.getElementById('search-results-table');
+        
+        searchInput.oninput = () => {
+            const query = searchInput.value.toLowerCase().trim();
+            let results = [];
+            
+            if (query.length > 1) {
+                // Search sales
+                sales.forEach(s => {
+                    const customer = customers.find(c => c.id === s.customerId);
+                    if ((s.invoice && s.invoice.toLowerCase().includes(query)) || (customer && customer.name.toLowerCase().includes(query))) {
+                        results.push({
+                            type: 'Sales',
+                            id: s.id,
+                            number: s.invoice,
+                            date: s.date,
+                            contact: customer?.name || 'N/A',
+                            total: s.total,
+                            link: `new_sale`
+                        });
+                    }
+                });
+
+                // Search purchases
+                purchases.forEach(p => {
+                    const supplier = suppliers.find(s => s.id === p.supplierId);
+                    if ((p.bill && p.bill.toLowerCase().includes(query)) || (supplier && supplier.name.toLowerCase().includes(query))) {
+                        results.push({
+                            type: 'Purchases',
+                            id: p.id,
+                            number: p.bill,
+                            date: p.date,
+                            contact: supplier?.name || 'N/A',
+                            total: p.total,
+                            link: `new_purchase`
+                        });
+                    }
+                });
+            }
+            
+            if (results.length > 0) {
+                resultsDiv.innerHTML = `
+                    <h3>Search Results</h3>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Type</th>
+                                <th>Number</th>
+                                <th>Date</th>
+                                <th>Contact</th>
+                                <th class="right">Total (₹)</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${results.map(r => `
+                                <tr class="clickable" onclick="redirect('${r.link}', '${r.id}')">
+                                    <td>${r.type}</td>
+                                    <td>${r.number}</td>
+                                    <td>${r.date}</td>
+                                    <td>${r.contact}</td>
+                                    <td class="right">₹ ${fmt(r.total)}</td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>`;
+            } else if (query.length > 1) {
+                resultsDiv.innerHTML = `<div class="small" style="padding: 16px;">No results found.</div>`;
+            } else {
+                resultsDiv.innerHTML = '';
+            }
+        };
+
+        window.exportData = () => {
+            const data = {};
+            LS_KEYS.forEach(key => data[key] = load(key));
+            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
@@ -1098,137 +1239,40 @@
             a.click();
             document.body.removeChild(a);
             URL.revokeObjectURL(url);
-            showToast('Data exported successfully!');
+            showToast('Data exported successfully.');
         };
 
-        document.getElementById('import-btn').onclick = () => {
-            const fileInput = document.getElementById('import-file');
-            if (fileInput.files.length === 0) {
-                showToast('Please select a file to import.');
-                return;
-            }
-            if (!confirm('ARE YOU SURE?\nThis will permanently delete all current data and replace it with the data from the file.')) {
-                return;
-            }
-
+        const importFile = document.getElementById('import-file');
+        importFile.onchange = (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
             const reader = new FileReader();
-            reader.onload = e => {
+            reader.onload = async (event) => {
                 try {
-                    const data = JSON.parse(e.target.result);
-                    let imported = 0;
-                    for (const key of LS_KEYS) {
-                        if (data[key] && Array.isArray(data[key])) {
-                            save(key, data[key]);
-                            imported++;
-                        }
-                    }
-                    if (imported > 0) {
-                        showToast('Data successfully imported! The app will now reload.');
-                        setTimeout(() => location.reload(), 1500);
-                    } else {
-                        showToast('Import failed: Invalid file format.');
+                    const importedData = JSON.parse(event.target.result);
+                    if (await showModal('This will overwrite all existing data. Are you sure?')) {
+                        LS_KEYS.forEach(key => {
+                            if (importedData[key]) save(key, importedData[key]);
+                        });
+                        showToast('Data imported successfully.');
+                        render('dashboard');
                     }
                 } catch (err) {
-                    showToast('Import failed: Could not parse the file.');
+                    showToast('Failed to import file. Please check the format.');
+                    console.error('Import error:', err);
                 }
             };
-            reader.readAsText(fileInput.files[0]);
+            reader.readAsText(file);
         };
     }
 
-    // ========== RENDER: OTHER REPORTS ==========
-    function renderLedgerSelection({ customers, suppliers }) {
-        main.innerHTML = `
-            <h2>Ledger Reports</h2>
-            <div class="card">
-                <p>Select a customer or supplier to view their ledger.</p>
-                <div class="row">
-                    <div style="flex:1"><label>Select Contact</label><select id="contact-select">
-                        <option value="">Select a contact</option>
-                        <optgroup label="Customers">
-                            ${customers.map(c => `<option value="customer-${c.id}">${c.name}</option>`).join('')}
-                        </optgroup>
-                        <optgroup label="Suppliers">
-                            ${suppliers.map(s => `<option value="supplier-${s.id}">${s.name}</option>`).join('')}
-                        </optgroup>
-                    </select></div>
-                    <div style="margin-top:21px;"><button class="btn primary" id="view-ledger-btn">View Ledger</button></div>
-                </div>
-            </div>
-            <div id="ledger-content"></div>`;
-
-        document.getElementById('view-ledger-btn').onclick = () => {
-            const selected = document.getElementById('contact-select').value;
-            if (selected) {
-                const [type, id] = selected.split('-');
-                render('contact_ledger', { type, id });
-            } else {
-                showToast('Please select a contact.');
-            }
-        };
-    }
-
-    function renderContactLedger({ sales, purchases, payments, customers, suppliers }, { type, id }) {
-        const contact = (type === 'customer' ? customers : suppliers).find(c => c.id === id);
-        if (!contact) {
-            main.innerHTML = '<div class="card">Contact not found.</div>';
-            return;
-        }
-
-        const transactions = [
-            ...(type === 'customer' ? sales.filter(s => s.customerId === id).map(s => ({ ...s, type: 'Sale', amount: s.total, paid: s.paid })) : []),
-            ...(type === 'supplier' ? purchases.filter(p => p.supplierId === id).map(p => ({ ...p, type: 'Purchase', amount: p.total, paid: p.paid })) : []),
-            ...payments.filter(p => p.contactId === id).map(p => ({ ...p, type: p.type === 'receipt' ? 'Receipt' : 'Payment', amount: p.amount, paid: p.amount })),
-        ].sort((a, b) => new Date(a.date) - new Date(b.date));
-
-        let balance = 0;
-        const rows = transactions.map(t => {
-            const debit = (t.type === 'Sale' || t.type === 'Payment') ? t.amount : 0;
-            const credit = (t.type === 'Receipt' || t.type === 'Purchase') ? t.amount : 0;
-            balance += (t.type === 'Sale' || t.type === 'Payment' || t.type === 'Purchase') ? (debit - t.paid) - credit : credit - debit;
-            return `<tr>
-                <td>${t.date}</td>
-                <td>${t.type}</td>
-                <td>${t.invoice || t.bill || 'N/A'}</td>
-                <td class="right">${fmt(debit)}</td>
-                <td class="right">${fmt(credit)}</td>
-                <td class="right">${fmt(balance)}</td>
-            </tr>`;
-        }).join('');
-
-        main.innerHTML = `
-            <h2>Ledger for ${contact.name}</h2>
-            <div class="card">
-                <h3>Balance: ₹ ${fmt(balance)}</h3>
-            </div>
-            <div class="card">
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Date</th>
-                            <th>Type</th>
-                            <th>Ref #</th>
-                            <th class="right">Debit (₹)</th>
-                            <th class="right">Credit (₹)</th>
-                            <th class="right">Balance (₹)</th>
-                        </tr>
-                    </thead>
-                    <tbody>${rows}</tbody>
-                </table>
-            </div>`;
-    }
-
+    // ========== RENDER: RECEIVABLES ==========
     function renderReceivables({ sales, customers }) {
-        const receivables = sales.filter(s => (s.total || 0) > (s.paid || 0)).map(s => ({
-            ...s,
-            customerName: customers.find(c => c.id === s.customerId)?.name || 'N/A',
-            due: (s.total || 0) - (s.paid || 0)
-        }));
-
+        const receivables = sales.filter(s => (s.total || 0) - (s.paid || 0) > 0);
         main.innerHTML = `
-            <h2>Receivables</h2>
+            <h2>Receivables (Amount to Receive)</h2>
             <div class="card">
-                <h3>Total Amount Due: ₹ ${fmt(receivables.reduce((sum, s) => sum + s.due, 0))}</h3>
+                <h3>Total Amount Due: ₹ ${fmt(receivables.reduce((sum, s) => sum + ((s.total || 0) - (s.paid || 0)), 0))}</h3>
                 <table>
                     <thead>
                         <tr>
@@ -1241,14 +1285,14 @@
                         </tr>
                     </thead>
                     <tbody>
-                        ${receivables.map(r => `
+                        ${receivables.map(s => `
                             <tr>
-                                <td>${r.date}</td>
-                                <td>${r.invoice}</td>
-                                <td>${r.customerName}</td>
-                                <td class="right">₹ ${fmt(r.total)}</td>
-                                <td class="right">₹ ${fmt(r.paid)}</td>
-                                <td class="right" style="color:#ef4444">₹ ${fmt(r.due)}</td>
+                                <td>${s.date}</td>
+                                <td>${s.invoice}</td>
+                                <td>${customers.find(c => c.id === s.customerId)?.name || 'N/A'}</td>
+                                <td class="right">₹ ${fmt(s.total)}</td>
+                                <td class="right">₹ ${fmt(s.paid)}</td>
+                                <td class="right" style="color:#ef4444">₹ ${fmt((s.total || 0) - (s.paid || 0))}</td>
                             </tr>
                         `).join('')}
                     </tbody>
@@ -1256,17 +1300,13 @@
             </div>`;
     }
 
+    // ========== RENDER: PAYABLES ==========
     function renderPayables({ purchases, suppliers }) {
-        const payables = purchases.filter(p => (p.total || 0) > (p.paid || 0)).map(p => ({
-            ...p,
-            supplierName: suppliers.find(s => s.id === p.supplierId)?.name || 'N/A',
-            due: (p.total || 0) - (p.paid || 0)
-        }));
-
+        const payables = purchases.filter(p => (p.total || 0) - (p.paid || 0) > 0);
         main.innerHTML = `
-            <h2>Payables</h2>
+            <h2>Payables (Amount to Pay)</h2>
             <div class="card">
-                <h3>Total Amount Due: ₹ ${fmt(payables.reduce((sum, p) => sum + p.due, 0))}</h3>
+                <h3>Total Amount Due: ₹ ${fmt(payables.reduce((sum, p) => sum + ((p.total || 0) - (p.paid || 0)), 0))}</h3>
                 <table>
                     <thead>
                         <tr>
@@ -1283,10 +1323,10 @@
                             <tr>
                                 <td>${p.date}</td>
                                 <td>${p.bill}</td>
-                                <td>${p.supplierName}</td>
+                                <td>${suppliers.find(s => s.id === p.supplierId)?.name || 'N/A'}</td>
                                 <td class="right">₹ ${fmt(p.total)}</td>
                                 <td class="right">₹ ${fmt(p.paid)}</td>
-                                <td class="right" style="color:#ef4444">₹ ${fmt(p.due)}</td>
+                                <td class="right" style="color:#ef4444">₹ ${fmt((p.total || 0) - (p.paid || 0))}</td>
                             </tr>
                         `).join('')}
                     </tbody>
